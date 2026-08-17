@@ -1,0 +1,37 @@
+name: move-lakehouses
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Branch to copy Lakehouse folders into'
+        required: true
+        default: 'Main'
+
+jobs:
+  move-lakehouses:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Checkout target branch
+        run: |
+          git checkout ${{ github.event.inputs.target_branch }} || git checkout -b ${{ github.event.inputs.target_branch }}
+
+      - name: Copy Lakehouse folders from main
+        run: |
+          git checkout main -- Bronze_LH.Lakehouse Gold_LH.Lakehouse Silver_LH.Lakehouse
+
+      - name: Commit and push changes
+        run: |
+          git add Bronze_LH.Lakehouse Gold_LH.Lakehouse Silver_LH.Lakehouse
+          git commit -m "Copy Lakehouse folders from main" || echo "Nothing to commit"
+          git push origin ${{ github.event.inputs.target_branch }}
