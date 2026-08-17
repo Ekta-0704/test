@@ -1,0 +1,33 @@
+name: Fabric Repo Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: List repo contents
+        run: |
+          echo "Repository contents:"
+          ls -la
+
+      - name: Check Fabric items exist
+        run: |
+          echo "Checking for expected Fabric folders..."
+          for item in "Bronze_LH.Lakehouse" "Gold_LH.Lakehouse" "Silver_LH.Lakehouse" "bronze_ingest.Notebook" "convert_gold.Notebook" "convert_to_silver.Notebook" "silver_clean.Notebook"; do
+            if [ -d "$item" ]; then
+              echo "✅ Found: $item"
+            else
+              echo "❌ Missing: $item"
+            fi
+          done
+
+      - name: Success message
+        run: echo "Workflow completed successfully! 🎉"
