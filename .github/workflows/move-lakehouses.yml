@@ -3,10 +3,10 @@ name: move-lakehouses
 on:
   workflow_dispatch:
     inputs:
-      target_branch:
-        description: 'Branch to copy Lakehouse folders into'
+      new_branch:
+        description: 'Name of the new branch to create (Lakehouses only)'
         required: true
-        default: 'Main'
+        default: 'lakehouses-only'
 
 jobs:
   move-lakehouses:
@@ -22,16 +22,22 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Checkout target branch
+      - name: Create new branch from main
         run: |
-          git checkout ${{ github.event.inputs.target_branch }} || git checkout -b ${{ github.event.inputs.target_branch }}
+          git checkout main
+          git checkout -b ${{ github.event.inputs.new_branch }}
 
-      - name: Copy Lakehouse folders from main
+      - name: Remove everything except Lakehouse folders
         run: |
-          git checkout main -- Bronze_LH.Lakehouse Gold_LH.Lakehouse Silver_LH.Lakehouse
+          find . -maxdepth 1 -mindepth 1 \
+            ! -name '.git' \
+            ! -name 'Bronze_LH.Lakehouse' \
+            ! -name 'Gold_LH.Lakehouse' \
+            ! -name 'Silver_LH.Lakehouse' \
+            -exec rm -rf {} +
 
-      - name: Commit and push changes
+      - name: Commit and push new branch
         run: |
-          git add Bronze_LH.Lakehouse Gold_LH.Lakehouse Silver_LH.Lakehouse
-          git commit -m "Copy Lakehouse folders from main" || echo "Nothing to commit"
-          git push origin ${{ github.event.inputs.target_branch }}
+          git add -A
+          git commit -m "Create branch with only Lakehouse folders" || echo "Nothing to commit"
+          git push origin ${{ github.event.inputs.new_branch }}
