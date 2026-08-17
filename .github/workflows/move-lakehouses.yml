@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       target_branch:
-        description: 'Branch to copy Lakehouse folders into'
+        description: 'Existing branch to clean up (keep only Lakehouse folders)'
         required: true
-        default: 'Main'
+        default: 'Lakehouse'
 
 jobs:
   move-lakehouses:
@@ -24,14 +24,19 @@ jobs:
 
       - name: Checkout target branch
         run: |
-          git checkout ${{ github.event.inputs.target_branch }} || git checkout -b ${{ github.event.inputs.target_branch }}
+          git checkout ${{ github.event.inputs.target_branch }}
 
-      - name: Copy Lakehouse folders from main
+      - name: Remove everything except Lakehouse folders
         run: |
-          git checkout main -- Bronze_LH.Lakehouse Gold_LH.Lakehouse Silver_LH.Lakehouse
+          find . -maxdepth 1 -mindepth 1 \
+            ! -name '.git' \
+            ! -name 'Bronze_LH.Lakehouse' \
+            ! -name 'Gold_LH.Lakehouse' \
+            ! -name 'Silver_LH.Lakehouse' \
+            -exec rm -rf {} +
 
       - name: Commit and push changes
         run: |
-          git add Bronze_LH.Lakehouse Gold_LH.Lakehouse Silver_LH.Lakehouse
-          git commit -m "Copy Lakehouse folders from main" || echo "Nothing to commit"
+          git add -A
+          git commit -m "Keep only Lakehouse folders on this branch" || echo "Nothing to commit"
           git push origin ${{ github.event.inputs.target_branch }}
