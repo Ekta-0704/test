@@ -3,10 +3,10 @@ name: move-lakehouses
 on:
   workflow_dispatch:
     inputs:
-      new_branch:
-        description: 'Name of the new branch to create (Lakehouses only)'
+      target_branch:
+        description: 'Existing branch to clean up (keep only Lakehouse folders)'
         required: true
-        default: 'lakehouses-only'
+        default: 'Lakehouse'
 
 jobs:
   move-lakehouses:
@@ -22,10 +22,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create new branch from main
+      - name: Checkout target branch
         run: |
-          git checkout main
-          git checkout -b ${{ github.event.inputs.new_branch }}
+          git checkout ${{ github.event.inputs.target_branch }}
 
       - name: Remove everything except Lakehouse folders
         run: |
@@ -36,8 +35,8 @@ jobs:
             ! -name 'Silver_LH.Lakehouse' \
             -exec rm -rf {} +
 
-      - name: Commit and push new branch
+      - name: Commit and push changes
         run: |
           git add -A
-          git commit -m "Create branch with only Lakehouse folders" || echo "Nothing to commit"
-          git push origin ${{ github.event.inputs.new_branch }}
+          git commit -m "Keep only Lakehouse folders on this branch" || echo "Nothing to commit"
+          git push origin ${{ github.event.inputs.target_branch }}
